@@ -21,7 +21,7 @@ use libc::{
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-use config::{Environment, Limits, Mount, ShareNet, SpaceUsage};
+use config::{CloneUser, Environment, Limits, Mount, ShareNet, SpaceUsage};
 use errors::{Error, FFIError};
 use run_info::{RunInfo, RunInfoResult, RunUsage};
 
@@ -139,7 +139,8 @@ pub(crate) fn set_alarm_interval(interval: i64) -> Result<()> {
 /// how often SIGALRM should trigger (in microseconds)
 const ALARM_TIMER_INTERVAL: i64 = 5_000;
 
-pub(crate) fn clone<F, T: Debug>(share_net: ShareNet, vfork: bool, f: F) -> Result<CloneHandle<T>>
+pub(crate) fn clone<F, T: Debug>(share_net: ShareNet, vfork: bool, clone_user: CloneUser, f: F)
+                                 -> Result<CloneHandle<T>>
 where
     F: FnOnce() -> T + Send,
     T: Serialize,
@@ -166,7 +167,12 @@ where
     }
 
     let mut clone_flags =
-        CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS | CLONE_NEWNS | SIGCHLD;
+        CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS | CLONE_NEWNS | SIGCHLD;
+
+    if clone_user == CloneUser::Yes {
+        clone_flags |= CLONE_NEWUSER;
+    }
+
     if share_net == ShareNet::Unshare {
         clone_flags |= CLONE_NEWNET;
     }

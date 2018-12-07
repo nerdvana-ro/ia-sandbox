@@ -55,7 +55,7 @@ mod ffi;
 pub mod run_info;
 pub mod utils;
 
-use config::{Config, Interactive, Limits, ShareNet, SwapRedirects};
+use config::{CloneUser, Config, Interactive, Limits, ShareNet, SwapRedirects};
 pub use errors::*;
 use ffi::CloneHandle;
 use run_info::{RunInfo, RunUsage};
@@ -68,14 +68,16 @@ pub fn spawn_jail(config: &Config) -> Result<JailHandle> {
     // Start a supervisor process in a different pid namespace
     // If by any chance the supervisor process dies, by rules of pid namespaces
     // all its descendant processes will die as well
-    ffi::clone(ShareNet::Share, false, || {
+    ffi::clone(ShareNet::Share, false, config.clone_user(), || {
         ffi::kill_on_parent_death()?;
         // Mount proc just for security
         ffi::mount_proc()?;
         // Without setting uid/gid maps user is not seen so it can not do anything
-        ffi::set_uid_gid_maps(user_group_id)?;
+        if config.clone_user() == CloneUser::Yes {
+            ffi::set_uid_gid_maps(user_group_id)?;
+        }
 
-        ffi::clone(config.share_net(), true, || {
+        ffi::clone(config.share_net(), true, config.clone_user(), || {
             if config.swap_redirects() == SwapRedirects::Yes {
                 if let Some(stdout) = config.redirect_stdout() {
                     ffi::redirect_fd(ffi::STDOUT, stdout)?;
@@ -130,7 +132,9 @@ pub fn spawn_jail(config: &Config) -> Result<JailHandle> {
             // inside its namespace and nothing outside)
             // Must be done after mount_proc so we can properly read and write
             // /proc/self/uid_map and /proc/self/gid_map
-            ffi::set_uid_gid_maps((ffi::UserId::ROOT, ffi::GroupId::ROOT))?;
+            if config.clone_user() == CloneUser::Yes {
+                ffi::set_uid_gid_maps((ffi::UserId::ROOT, ffi::GroupId::ROOT))?;
+            }
 
             if config.interactive() == Interactive::No {
                 // Move the process to a different process group (so it can't kill it's own

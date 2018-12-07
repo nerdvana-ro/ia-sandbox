@@ -236,6 +236,14 @@ pub(crate) fn app() -> App<'static, 'static> {
                 ),
         )
         .arg(
+            Arg::with_name("clone-user")
+                .long("clone-user")
+                .help("whether to pass CLONE_NEWUSER to clone()")
+                .long_help(
+                    "whether to pass CLONE_NEWUSER to clone().",
+                ),
+        )
+        .arg(
             Arg::with_name("no-clear-usage")
                 .long("no-clear-usage")
                 .help("whether to not clear usage (time/memory/pids) from cgroups")

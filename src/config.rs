@@ -51,6 +51,18 @@ impl Default for Interactive {
     }
 }
 
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub enum CloneUser {
+    Yes,
+    No,
+}
+
+impl Default for CloneUser {
+    fn default() -> Self {
+        CloneUser::Yes
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct SpaceUsage(u64);
 
@@ -301,6 +313,7 @@ pub struct Config {
     swap_redirects: SwapRedirects,
     clear_usage: ClearUsage,
     interactive: Interactive,
+    clone_user: CloneUser,
     environment: Environment,
 }
 
@@ -321,6 +334,7 @@ impl Config {
         swap_redirects: SwapRedirects,
         clear_usage: ClearUsage,
         interactive: Interactive,
+	clone_user: CloneUser,
         environment: Environment,
     ) -> Self {
         Self {
@@ -338,6 +352,7 @@ impl Config {
             swap_redirects,
             clear_usage,
             interactive,
+	    clone_user,
             environment,
         }
     }
@@ -396,6 +411,10 @@ impl Config {
 
     pub fn interactive(&self) -> Interactive {
         self.interactive
+    }
+
+    pub fn clone_user(&self) -> CloneUser {
+        self.clone_user
     }
 
     pub fn environment(&self) -> &Environment {

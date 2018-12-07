@@ -5,8 +5,8 @@ use std::result;
 use std::time::Duration;
 
 use ia_sandbox::config::{
-    ClearUsage, Config, ControllerPath, Environment, Interactive, Limits, Mount, MountOptions,
-    ShareNet, SpaceUsage, SwapRedirects,
+    ClearUsage, CloneUser, Config, ControllerPath, Environment, Interactive,
+    Limits, Mount, MountOptions, ShareNet, SpaceUsage, SwapRedirects,
 };
 
 use app;
@@ -164,6 +164,7 @@ impl<'a> ArgMatches<'a> {
             self.swap_redirects(),
             self.clear_usage(),
             self.interactive(),
+	    self.clone_user(),
             self.environment()?,
         );
 
@@ -295,6 +296,14 @@ impl<'a> ArgMatches<'a> {
             Interactive::Yes
         } else {
             Interactive::No
+        }
+    }
+
+    fn clone_user(&self) -> CloneUser {
+        if self.is_present("clone-user") {
+            CloneUser::Yes
+        } else {
+            CloneUser::No
         }
     }
 
