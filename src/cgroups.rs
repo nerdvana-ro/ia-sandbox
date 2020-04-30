@@ -25,7 +25,7 @@ fn cgroup_write<T1: AsRef<Path>, T2: AsRef<str>>(
         CGroupError::OpenCGroupFileError {
             controller_path: controller_path.to_path_buf(),
             file: file.as_ref().to_path_buf(),
-            error: err.description().into(),
+            error: err.to_string().into(),
         }
     })?;
 
@@ -34,7 +34,7 @@ fn cgroup_write<T1: AsRef<Path>, T2: AsRef<str>>(
         .map_err(|err| CGroupError::WriteCGroupFileError {
             controller_path: controller_path.to_path_buf(),
             file: file.as_ref().to_path_buf(),
-            error: err.description().into(),
+            error: err.to_string().into(),
         })
 }
 
@@ -47,7 +47,7 @@ where
         CGroupError::OpenCGroupFileError {
             controller_path: controller_path.to_path_buf(),
             file: file.as_ref().to_path_buf(),
-            error: err.description().into(),
+            error: err.to_string().into(),
         }
     })?;
 
@@ -56,7 +56,7 @@ where
         CGroupError::ReadCGroupFileError {
             controller_path: controller_path.to_path_buf(),
             file: file.as_ref().to_path_buf(),
-            error: err.description().into(),
+            error: err.to_string().into(),
         }
     })?;
 
@@ -67,7 +67,7 @@ where
             controller_path: controller_path.to_path_buf(),
             file: file.as_ref().to_path_buf(),
             buffer,
-            error: err.description().into(),
+            error: err.to_string().into(),
         })
 }
 
@@ -80,7 +80,7 @@ pub(crate) fn enter_cgroup(controller_path: &Path) -> Result<()> {
             CGroupError::InstanceControllerCreateError {
                 controller_path: controller_path.to_path_buf(),
                 instance_name: OsString::from(ISOLATED_CGROUP_NAME),
-                error: err.description().into(),
+                error: err.to_string().into(),
             }
         })?;
     }
@@ -103,7 +103,7 @@ fn get_instance_path(controller_path: &Path, instance_name: Option<&OsStr>) -> R
             CGroupError::InstanceControllerCreateError {
                 controller_path: controller_path.to_path_buf(),
                 instance_name: instance.to_os_string(),
-                error: err.description().into(),
+                error: err.to_string().into(),
             }
         })?;
     }

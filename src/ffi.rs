@@ -1,4 +1,3 @@
-use std::error::Error as ErrorExt;
 use std::ffi::{CString, OsStr};
 use std::fmt::Debug;
 use std::fs::{self, File, OpenOptions};
@@ -254,14 +253,14 @@ pub(crate) fn mount_inside(new_root: &Path, mount: &Mount) -> Result<()> {
         fs::create_dir_all(&inner_path)
             .map_err(|error| FFIError::CreateDirError {
                 path: inner_path.to_path_buf(),
-                error: error.description().into(),
+                error: error.to_string().into(),
             })
             .unwrap_or(());
     } else {
         inner_path.parent().map_or(Ok(()), |pardir| {
             fs::create_dir_all(pardir).map_err(|error| FFIError::CreateDirError {
                 path: inner_path.to_path_buf(),
-                error: error.description().into(),
+                error: error.to_string().into(),
             })
         })?;
         let _ = OpenOptions::new()
@@ -270,7 +269,7 @@ pub(crate) fn mount_inside(new_root: &Path, mount: &Mount) -> Result<()> {
             .open(&inner_path)
             .map_err(|error| FFIError::CreateDirError {
                 path: inner_path.to_path_buf(),
-                error: error.description().into(),
+                error: error.to_string().into(),
             })?;
     }
 
@@ -341,7 +340,7 @@ where
     if !old_root.exists() {
         fs::create_dir(&old_root).map_err(|error| FFIError::CreateDirError {
             path: old_root.to_path_buf(),
-            error: error.description().into(),
+            error: error.to_string().into(),
         })?;
     }
 
@@ -408,7 +407,7 @@ pub(crate) fn mount_proc() -> Result<()> {
     if !path.exists() {
         fs::create_dir(&path).map_err(|err| FFIError::CreateDirError {
             path: path.clone(),
-            error: err.description().into(),
+            error: err.to_string().into(),
         })?;
     }
     let path_as_c_string = os_str_to_c_string(&path);
@@ -682,11 +681,11 @@ impl<T: DeserializeOwned> CloneHandle<T> {
         let _ = self
             .read_error_pipe
             .read_to_end(&mut data)
-            .map_err(|err| Error::DeserializeError(err.description().into()))?;
+            .map_err(|err| Error::DeserializeError(err.to_string().into()))?;
         let result = if !data.is_empty() {
             Some(
                 bincode::deserialize(&data)
-                    .map_err(|err| Error::DeserializeError(err.description().into()))?,
+                    .map_err(|err| Error::DeserializeError(err.to_string().into()))?,
             )
         } else {
             None
