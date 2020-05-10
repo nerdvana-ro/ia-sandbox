@@ -63,7 +63,7 @@ fn parse_space_usage(string: &str) -> Result<SpaceUsage> {
     let number = number
         .parse::<u64>()
         .context(format_err!("Could not parse number {}", number))?;
-    let rl = number as libc::rlim_t;
+    let rl: libc::rlim_t = number;
     match suffix {
         "b" => Ok(SpaceUsage::from_bytes(rl)),
         "kb" => Ok(SpaceUsage::from_kilobytes(rl)),
