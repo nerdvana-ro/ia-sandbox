@@ -63,14 +63,15 @@ fn parse_space_usage(string: &str) -> Result<SpaceUsage> {
     let number = number
         .parse::<u64>()
         .context(format_err!("Could not parse number {}", number))?;
+    let rl = number as libc::rlim_t;
     match suffix {
-        "b" => Ok(SpaceUsage::from_bytes(number)),
-        "kb" => Ok(SpaceUsage::from_kilobytes(number)),
-        "mb" => Ok(SpaceUsage::from_megabytes(number)),
-        "gb" => Ok(SpaceUsage::from_gigabytes(number)),
-        "kib" => Ok(SpaceUsage::from_kibibytes(number)),
-        "mib" => Ok(SpaceUsage::from_mebibytes(number)),
-        "gib" => Ok(SpaceUsage::from_gibibytes(number)),
+        "b" => Ok(SpaceUsage::from_bytes(rl)),
+        "kb" => Ok(SpaceUsage::from_kilobytes(rl)),
+        "mb" => Ok(SpaceUsage::from_megabytes(rl)),
+        "gb" => Ok(SpaceUsage::from_gigabytes(rl)),
+        "kib" => Ok(SpaceUsage::from_kibibytes(rl)),
+        "mib" => Ok(SpaceUsage::from_mebibytes(rl)),
+        "gib" => Ok(SpaceUsage::from_gibibytes(rl)),
         suffix => Err(format_err!("Unrecognized suffix: {}", suffix)),
     }
 }

@@ -109,7 +109,7 @@ pub(crate) fn set_sig_alarm_handler() -> Result<()> {
     }
 }
 
-pub(crate) fn set_alarm_interval(interval: i64) -> Result<()> {
+pub(crate) fn set_alarm_interval(interval: libc::time_t) -> Result<()> {
     let timeval = libc::timeval {
         tv_sec: interval / 1_000_000,
         tv_usec: interval % 1_000_000,
@@ -136,7 +136,7 @@ pub(crate) fn set_alarm_interval(interval: i64) -> Result<()> {
 }
 
 /// how often SIGALRM should trigger (in microseconds)
-const ALARM_TIMER_INTERVAL: i64 = 5_000;
+const ALARM_TIMER_INTERVAL: libc::time_t = 5_000;
 
 pub(crate) fn clone<F, T: Debug>(share_net: ShareNet, vfork: bool, clone_user: CloneUser, f: F)
                                  -> Result<CloneHandle<T>>

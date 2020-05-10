@@ -129,7 +129,7 @@ pub(crate) fn enter_cpuacct_cgroup(
 }
 
 const MEMORY_DEFAULT_CONTROLLER_PATH: &str = "/sys/fs/cgroup/memory/ia-sandbox";
-const EXTRA_MEMORY_GIVEN: u64 = 16 * 1_024;
+const EXTRA_MEMORY_GIVEN: libc::rlim_t = 16 * 1_024;
 pub(crate) fn enter_memory_cgroup(
     controller_path: Option<&Path>,
     instance_name: Option<&OsStr>,

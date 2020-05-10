@@ -64,42 +64,42 @@ impl Default for CloneUser {
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct SpaceUsage(u64);
+pub struct SpaceUsage(libc::rlim_t);
 
 impl SpaceUsage {
-    pub fn from_bytes(bytes: u64) -> Self {
+    pub fn from_bytes(bytes: libc::rlim_t) -> Self {
         Self(bytes)
     }
 
-    pub fn from_kilobytes(kilobytes: u64) -> Self {
+    pub fn from_kilobytes(kilobytes: libc::rlim_t) -> Self {
         Self::from_bytes(kilobytes * 1_000)
     }
 
-    pub fn from_megabytes(megabytes: u64) -> Self {
+    pub fn from_megabytes(megabytes: libc::rlim_t) -> Self {
         Self::from_kilobytes(megabytes * 1_000)
     }
 
-    pub fn from_gigabytes(gigabytes: u64) -> Self {
+    pub fn from_gigabytes(gigabytes: libc::rlim_t) -> Self {
         Self::from_megabytes(gigabytes * 1_000)
     }
 
-    pub fn from_kibibytes(kibibytes: u64) -> Self {
+    pub fn from_kibibytes(kibibytes: libc::rlim_t) -> Self {
         Self::from_bytes(kibibytes * 1_024)
     }
 
-    pub fn from_mebibytes(mebibytes: u64) -> Self {
+    pub fn from_mebibytes(mebibytes: libc::rlim_t) -> Self {
         Self::from_kibibytes(mebibytes * 1_024)
     }
 
-    pub fn from_gibibytes(gibibytes: u64) -> Self {
+    pub fn from_gibibytes(gibibytes: libc::rlim_t) -> Self {
         Self::from_mebibytes(gibibytes * 1_024)
     }
 
-    pub fn as_bytes(self) -> u64 {
+    pub fn as_bytes(self) -> libc::rlim_t {
         self.0
     }
 
-    pub fn as_kilobytes(self) -> u64 {
+    pub fn as_kilobytes(self) -> libc::rlim_t {
         self.0 / 1_000
     }
 }
