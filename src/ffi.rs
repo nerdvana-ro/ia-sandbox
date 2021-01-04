@@ -710,8 +710,8 @@ impl<T: DeserializeOwned> CloneHandle<T> {
                     error.error_string(),
                 )));
             } else {
-                if unsafe { libc::WIFEXITED(status) } {
-                    let exit_code = unsafe { libc::WEXITSTATUS(status) } as u32;
+                if libc::WIFEXITED(status) {
+                    let exit_code = libc::WEXITSTATUS(status) as u32;
                     if exit_code == 0 {
                         return Ok(RunInfo::new(RunInfoResult::Success(result), usage));
                     } else {
@@ -722,12 +722,12 @@ impl<T: DeserializeOwned> CloneHandle<T> {
                     }
                 }
 
-                if unsafe { libc::WIFSIGNALED(status) } {
-                    let signal = unsafe { libc::WTERMSIG(status) } as u32;
+                if libc::WIFSIGNALED(status) {
+                    let signal = libc::WTERMSIG(status) as u32;
                     return Ok(RunInfo::new(RunInfoResult::KilledBySignal(signal), usage));
                 }
 
-                if unsafe { libc::WIFSTOPPED(status) || libc::WIFCONTINUED(status) } {
+                if libc::WIFSTOPPED(status) || libc::WIFCONTINUED(status) {
                     return Err(Error::StoppedContinuedError);
                 }
             }
