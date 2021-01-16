@@ -8,7 +8,7 @@ use std::result;
 use std::str::FromStr;
 use std::time::Duration;
 
-use config::{ClearUsage, ControllerPath, Limits, SpaceUsage};
+use config::{ClearUsage, ControllerPath, IsolatedCgroup, Limits, SpaceUsage};
 use errors::CGroupError;
 use ffi;
 use run_info::RunUsage;
@@ -72,20 +72,27 @@ where
 }
 
 const ISOLATED_CGROUP_NAME: &str = "isolated";
-pub(crate) fn enter_cgroup(controller_path: &Path) -> Result<()> {
-    let isolated_cgroup = controller_path.join(ISOLATED_CGROUP_NAME);
+pub(crate) fn enter_cgroup(
+    controller_path: &Path,
+    isolated_cgroup: IsolatedCgroup,
+) -> Result<()> {
+    if isolated_cgroup == IsolatedCgroup::Yes {
+        let isolated_cgroup = controller_path.join(ISOLATED_CGROUP_NAME);
 
-    if !isolated_cgroup.exists() {
-        fs::create_dir(&isolated_cgroup).map_err(|err| {
-            CGroupError::InstanceControllerCreateError {
-                controller_path: controller_path.to_path_buf(),
-                instance_name: OsString::from(ISOLATED_CGROUP_NAME),
-                error: err.to_string().into(),
-            }
-        })?;
+        if !isolated_cgroup.exists() {
+            fs::create_dir(&isolated_cgroup).map_err(|err| {
+                CGroupError::InstanceControllerCreateError {
+                    controller_path: controller_path.to_path_buf(),
+                    instance_name: OsString::from(ISOLATED_CGROUP_NAME),
+                    error: err.to_string().into(),
+                }
+            })?;
+        }
+
+        cgroup_write(&isolated_cgroup, "tasks", format!("{}\n", ffi::getpid()))
+    } else {
+        cgroup_write(&controller_path, "tasks", format!("{}\n", ffi::getpid()))
     }
-
-    cgroup_write(&isolated_cgroup, "tasks", format!("{}\n", ffi::getpid()))
 }
 
 const DEFAULT_INSTANCE_NAME: &str = "default";
@@ -115,6 +122,7 @@ pub(crate) fn enter_cpuacct_cgroup(
     controller_path: Option<&Path>,
     instance_name: Option<&OsStr>,
     clear_usage: ClearUsage,
+    isolated_cgroup: IsolatedCgroup,
 ) -> Result<()> {
     let instance_path = get_instance_path(
         controller_path.unwrap_or_else(|| Path::new(CPUACCT_DEFAULT_CONTROLLER_PATH)),
@@ -125,7 +133,7 @@ pub(crate) fn enter_cpuacct_cgroup(
         cgroup_write(&instance_path, "cpuacct.usage", "0\n")?;
     }
 
-    enter_cgroup(&instance_path)
+    enter_cgroup(&instance_path, isolated_cgroup)
 }
 
 const MEMORY_DEFAULT_CONTROLLER_PATH: &str = "/sys/fs/cgroup/memory/ia-sandbox";
@@ -135,6 +143,7 @@ pub(crate) fn enter_memory_cgroup(
     instance_name: Option<&OsStr>,
     memory_limit: Option<SpaceUsage>,
     clear_usage: ClearUsage,
+    isolated_cgroup: IsolatedCgroup,
 ) -> Result<()> {
     let instance_path = get_instance_path(
         controller_path.unwrap_or_else(|| Path::new(MEMORY_DEFAULT_CONTROLLER_PATH)),
@@ -166,7 +175,7 @@ pub(crate) fn enter_memory_cgroup(
         }
     }
 
-    enter_cgroup(&instance_path)
+    enter_cgroup(&instance_path, isolated_cgroup)
 }
 
 const PIDS_DEFAULT_CONTROLLER_PATH: &str = "/sys/fs/cgroup/pids/ia-sandbox";
@@ -175,6 +184,7 @@ pub(crate) fn enter_pids_cgroup(
     instance_name: Option<&OsStr>,
     pids_limit: Option<usize>,
     clear_usage: ClearUsage,
+    isolated_cgroup: IsolatedCgroup,
 ) -> Result<()> {
     let instance_path = get_instance_path(
         controller_path.unwrap_or_else(|| Path::new(PIDS_DEFAULT_CONTROLLER_PATH)),
@@ -189,7 +199,7 @@ pub(crate) fn enter_pids_cgroup(
         }
     }
 
-    enter_cgroup(&instance_path)
+    enter_cgroup(&instance_path, isolated_cgroup)
 }
 
 pub(crate) fn enter_all_cgroups(
@@ -197,19 +207,27 @@ pub(crate) fn enter_all_cgroups(
     instance_name: Option<&OsStr>,
     limits: Limits,
     clear_usage: ClearUsage,
+    isolated_cgroup: IsolatedCgroup,
 ) -> Result<()> {
-    enter_cpuacct_cgroup(controller_path.cpuacct(), instance_name, clear_usage)?;
+    enter_cpuacct_cgroup(
+        controller_path.cpuacct(),
+        instance_name,
+        clear_usage,
+        isolated_cgroup,
+    )?;
     enter_memory_cgroup(
         controller_path.memory(),
         instance_name,
         limits.memory(),
         clear_usage,
+        isolated_cgroup,
     )?;
     enter_pids_cgroup(
         controller_path.pids(),
         instance_name,
         limits.pids(),
         clear_usage,
+        isolated_cgroup,
     )
 }
 

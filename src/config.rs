@@ -63,6 +63,18 @@ impl Default for CloneUser {
     }
 }
 
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub enum IsolatedCgroup {
+    Yes,
+    No,
+}
+
+impl Default for IsolatedCgroup {
+    fn default() -> Self {
+        Self::No
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct SpaceUsage(libc::rlim_t);
 
@@ -314,6 +326,7 @@ pub struct Config {
     clear_usage: ClearUsage,
     interactive: Interactive,
     clone_user: CloneUser,
+    isolated_cgroup: IsolatedCgroup,
     environment: Environment,
 }
 
@@ -334,7 +347,8 @@ impl Config {
         swap_redirects: SwapRedirects,
         clear_usage: ClearUsage,
         interactive: Interactive,
-	clone_user: CloneUser,
+        clone_user: CloneUser,
+        isolated_cgroup: IsolatedCgroup,
         environment: Environment,
     ) -> Self {
         Self {
@@ -352,7 +366,8 @@ impl Config {
             swap_redirects,
             clear_usage,
             interactive,
-	    clone_user,
+            clone_user,
+            isolated_cgroup,
             environment,
         }
     }
@@ -415,6 +430,10 @@ impl Config {
 
     pub fn clone_user(&self) -> CloneUser {
         self.clone_user
+    }
+
+    pub fn isolated_cgroup(&self) -> IsolatedCgroup {
+        self.isolated_cgroup
     }
 
     pub fn environment(&self) -> &Environment {

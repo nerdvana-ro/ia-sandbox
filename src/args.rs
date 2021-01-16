@@ -6,7 +6,8 @@ use std::time::Duration;
 
 use ia_sandbox::config::{
     ClearUsage, CloneUser, Config, ControllerPath, Environment, Interactive,
-    Limits, Mount, MountOptions, ShareNet, SpaceUsage, SwapRedirects,
+    IsolatedCgroup, Limits, Mount, MountOptions, ShareNet, SpaceUsage,
+    SwapRedirects,
 };
 
 use app;
@@ -164,7 +165,8 @@ impl<'a> ArgMatches<'a> {
             self.swap_redirects(),
             self.clear_usage(),
             self.interactive(),
-	    self.clone_user(),
+	        self.clone_user(),
+            self.isolated_cgroup(),
             self.environment()?,
         );
 
@@ -304,6 +306,14 @@ impl<'a> ArgMatches<'a> {
             CloneUser::Yes
         } else {
             CloneUser::No
+        }
+    }
+
+    fn isolated_cgroup(&self) -> IsolatedCgroup {
+        if self.is_present("no-isolated-cgroup") {
+            IsolatedCgroup::No
+        } else {
+            IsolatedCgroup::Yes
         }
     }
 

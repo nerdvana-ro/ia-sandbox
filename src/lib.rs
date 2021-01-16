@@ -105,6 +105,7 @@ pub fn spawn_jail(config: &Config) -> Result<JailHandle> {
                 config.instance_name(),
                 config.limits(),
                 config.clear_usage(),
+                config.isolated_cgroup(),
             )?;
 
             ffi::unshare_cgroup()?;

@@ -269,6 +269,14 @@ pub(crate) fn app() -> App<'static, 'static> {
                 ),
         )
         .arg(
+            Arg::with_name("no-isolated-cgroup")
+                .long("no-isolated-cgroup")
+                .help("whether to not create isolated cgroups within the instance")
+                .long_help(
+                    "whether to not create isolated cgroups within the instance.",
+                ),
+        )
+        .arg(
             Arg::with_name("env")
                 .long("env")
                 .short("e")
