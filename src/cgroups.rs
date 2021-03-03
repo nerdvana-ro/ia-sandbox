@@ -4,6 +4,7 @@ use std::ffi::{OsStr, OsString};
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::result;
 use std::str::FromStr;
 use std::time::Duration;
@@ -69,6 +70,26 @@ where
             buffer,
             error: err.to_string().into(),
         })
+}
+
+// Assumes the file contains "key value" pairs separated by one space.
+// Returns the value for the given key.
+fn cgroup_read_value(controller_path: &Path, file: &str, _key: &str)
+                     -> libc::rlim_t {
+
+    // grep for ^cache
+    let path = controller_path.join(file);
+    let output = Command::new("grep")
+        .arg("^cache ")
+        .arg(&path)
+        .output()
+        .expect("failed to execute process");
+    let stdout = String::from_utf8(output.stdout).unwrap();
+
+    // split the line and return the second chunk
+    let parts:Vec<&str> = stdout.trim().split(" ").collect();
+    parts[1].parse::<libc::rlim_t>().unwrap()
+
 }
 
 const ISOLATED_CGROUP_NAME: &str = "isolated";
@@ -142,6 +163,7 @@ pub(crate) fn enter_memory_cgroup(
     controller_path: Option<&Path>,
     instance_name: Option<&OsStr>,
     memory_limit: Option<SpaceUsage>,
+    cache_limit: Option<SpaceUsage>,
     clear_usage: ClearUsage,
     isolated_cgroup: IsolatedCgroup,
 ) -> Result<()> {
@@ -158,20 +180,24 @@ pub(crate) fn enter_memory_cgroup(
         // times for limit_in_bytes < memsw.limit_in_bytes
         cgroup_write(&instance_path, "memory.memsw.limit_in_bytes", "-1\n").unwrap_or(());
         cgroup_write(&instance_path, "memory.limit_in_bytes", "-1\n")?;
+
         if let Some(memory_limit) = memory_limit {
+            let actual_limit = memory_limit.as_bytes() +
+                cache_limit.unwrap_or(SpaceUsage::from_bytes(0)).as_bytes() +
+                EXTRA_MEMORY_GIVEN;
             // Assign some extra memory so that we can tell when a killed by signal 9 is actually a
             // memory limit exceeded
             cgroup_write(
                 &instance_path,
                 "memory.limit_in_bytes",
-                format!("{}\n", memory_limit.as_bytes() + EXTRA_MEMORY_GIVEN),
+                format!("{}\n", actual_limit),
             )?;
             cgroup_write(
                 &instance_path,
                 "memory.memsw.limit_in_bytes",
-                format!("{}\n", memory_limit.as_bytes() + EXTRA_MEMORY_GIVEN),
+                format!("{}\n", actual_limit),
             )
-            .unwrap_or(());
+                .unwrap_or(());
         }
     }
 
@@ -219,6 +245,7 @@ pub(crate) fn enter_all_cgroups(
         controller_path.memory(),
         instance_name,
         limits.memory(),
+        limits.cache(),
         clear_usage,
         isolated_cgroup,
     )?;
@@ -248,9 +275,12 @@ pub(crate) fn get_usage(
     let user_time = Duration::from_nanos(cgroup_read(&cpuacct_instance_path, "cpuacct.usage")?);
 
     let memory_instance_path = memory_controller_path.join(instance);
-    let memory = SpaceUsage::from_bytes(cmp::max(
+    let cache = cgroup_read_value(&memory_instance_path, "memory.stat", "cache");
+
+    let memory = cmp::max(
         cgroup_read(&memory_instance_path, "memory.max_usage_in_bytes")?,
         cgroup_read(&memory_instance_path, "memory.memsw.max_usage_in_bytes").unwrap_or(0),
-    ));
-    Ok(RunUsage::new(user_time, wall_time, memory))
+    );
+    let actual_memory = SpaceUsage::from_bytes(memory - cache);
+    Ok(RunUsage::new(user_time, wall_time, actual_memory))
 }

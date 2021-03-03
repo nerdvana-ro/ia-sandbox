@@ -124,9 +124,22 @@ pub(crate) fn app() -> App<'static, 'static> {
                 .takes_value(true)
                 .help("Stack memory limit")
                 .long_help(
-                    "Stack memory limit. The maxim amount of memory this program is allowed\n\
-                     tu use as stack. Given as an unsigned number followed by\n\
+                    "Stack memory limit. The maximum amount of memory this program is allowed\n\
+                     to use as stack. Given as an unsigned number followed by\n\
                      one of the usual suffixes b, kb, mb, gb, kib, mib, gib.",
+                ),
+        )
+        .arg(
+            Arg::with_name("cache")
+                .long("cache")
+                .short("c")
+                .takes_value(true)
+                .help("Cache memory limit")
+                .long_help(
+                    "Cache memory limit. The maximum amount of page cache memory this program\n\
+                     is allowed to use. This does not count towards the memory limit.\n\
+                     Given as an unsigned number followed by one of the usual suffixes b, kb,\n\
+                     mb, gb, kib, mib, gib.",
                 ),
         )
         .arg(

@@ -143,6 +143,7 @@ pub struct Limits {
     user_time: Option<Duration>,
     memory: Option<SpaceUsage>,
     stack: Option<SpaceUsage>,
+    cache: Option<SpaceUsage>,
     pids: Option<usize>,
 }
 
@@ -152,6 +153,7 @@ impl Limits {
         user_time: Option<Duration>,
         memory: Option<SpaceUsage>,
         stack: Option<SpaceUsage>,
+        cache: Option<SpaceUsage>,
         pids: Option<usize>,
     ) -> Self {
         Self {
@@ -159,6 +161,7 @@ impl Limits {
             user_time,
             memory,
             stack,
+            cache,
             pids,
         }
     }
@@ -179,6 +182,10 @@ impl Limits {
         self.stack
     }
 
+    pub fn cache(&self) -> Option<SpaceUsage> {
+        self.cache
+    }
+
     pub fn pids(&self) -> Option<usize> {
         self.pids
     }
@@ -186,7 +193,7 @@ impl Limits {
 
 impl Default for Limits {
     fn default() -> Self {
-        Self::new(None, None, None, None, None)
+        Self::new(None, None, None, None, None, None)
     }
 }
 
