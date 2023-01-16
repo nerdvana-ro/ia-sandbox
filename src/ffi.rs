@@ -147,7 +147,7 @@ where
     struct Callback<F> {
         inner: F,
         write_error_pipe: File,
-    };
+    }
     extern "C" fn cb<T, F>(arg: *mut libc::c_void) -> libc::c_int
     where
         T: Serialize,
@@ -710,8 +710,8 @@ impl<T: DeserializeOwned> CloneHandle<T> {
                     error.error_string(),
                 )));
             } else {
-                if libc::WIFEXITED(status) {
-                    let exit_code = libc::WEXITSTATUS(status) as u32;
+                if unsafe { libc::WIFEXITED(status) } {
+                    let exit_code = unsafe { libc::WEXITSTATUS(status) } as u32;
                     if exit_code == 0 {
                         return Ok(RunInfo::new(RunInfoResult::Success(result), usage));
                     } else {
@@ -722,12 +722,12 @@ impl<T: DeserializeOwned> CloneHandle<T> {
                     }
                 }
 
-                if libc::WIFSIGNALED(status) {
-                    let signal = libc::WTERMSIG(status) as u32;
+                if unsafe { libc::WIFSIGNALED(status) } {
+                    let signal = unsafe { libc::WTERMSIG(status) } as u32;
                     return Ok(RunInfo::new(RunInfoResult::KilledBySignal(signal), usage));
                 }
 
-                if libc::WIFSTOPPED(status) || libc::WIFCONTINUED(status) {
+                if unsafe { libc::WIFSTOPPED(status) || libc::WIFCONTINUED(status) } {
                     return Err(Error::StoppedContinuedError);
                 }
             }
